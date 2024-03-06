@@ -1,6 +1,8 @@
 from django.urls import path
-from .views import Form1ListCreateView
+from django.conf import settings
+from django.conf.urls.static import static
+from .views import create_form1
 
 urlpatterns = [
-    path('form1/', Form1ListCreateView.as_view(), name='form1-list-create'),
-]
+    path('form1/', create_form1, name='create-form1'),
+]+ static(settings.MEDIA_URL, document_root= settings.MEDIA_ROOT)

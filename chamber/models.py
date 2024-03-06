@@ -93,8 +93,12 @@ class Form1(models.Model):
     directors = models.ManyToManyField(Director, related_name='form1s', blank=True,)
     reason_for_joining_chamber = models.TextField()
     
-    e_sign = models.ImageField(upload_to='e_signs/', null=True, blank=True)
-    seal_image = models.ImageField(upload_to='seals/', null=True, blank=True)
+    e_sign = models.FileField(upload_to='e_sign/', null=True, verbose_name="")
+    seal_image = models.FileField(upload_to='seal_image/', null=True, verbose_name="")
+
+    def __str__(self):
+        return f"{self.Nameofapplicant}: {str(self.e_sign)}"
+
 
 
 '''
