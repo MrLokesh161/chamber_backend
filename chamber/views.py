@@ -15,6 +15,8 @@ class Form1ListCreateView(generics.ListCreateAPIView):
             director_serializer = DirectorSerializer(data=directors_data, many=True)
             director_serializer.is_valid(raise_exception=True)
             directors = director_serializer.save()
+
+            # Link directors to the Form1 instance
             form1_instance.directors.set(directors)
-            return Response("Success")
         
+        return Response("Success")

@@ -7,7 +7,7 @@ class DirectorSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class Form1Serializer(serializers.ModelSerializer):
-    directors = DirectorSerializer(many=True, required=False)
+    directors = DirectorSerializer(many=True, required=False, read_only=True)
 
     class Meta:
         model = Form1

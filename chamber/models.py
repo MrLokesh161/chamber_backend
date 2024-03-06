@@ -3,9 +3,9 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Director(models.Model):
-    name = models.CharField(max_length=255)
-    designation = models.CharField(max_length=255)
-    pan = models.CharField(max_length=10)
+    name = models.CharField(max_length=255,null=True)
+    designation = models.CharField(max_length=255,null=True)
+    pan = models.CharField(max_length=10,null=True)
 
     def __str__(self):
         return f" {self.name} - {self.designation}"
@@ -44,8 +44,8 @@ class Form1(models.Model):
     regoffadd = models.CharField(max_length=500)
     acoffice = models.CharField(max_length=500)
     acwork = models.CharField(max_length=500)
-    cdlan = PhoneNumberField() 
-    cdphone = PhoneNumberField()
+    cdlan = models.IntegerField() 
+    cdphone = models.IntegerField()
     cdemail = models.EmailField(max_length=254,blank=True) 
     cdweb = models.URLField(max_length=200, blank=True, null=True,)
     aadhar = models.IntegerField()
@@ -90,7 +90,7 @@ class Form1(models.Model):
     association_name = models.CharField(max_length=255, blank=True, null=True, verbose_name="Association Name")
     is_office_bearer = models.CharField(max_length=3, choices=[("Yes", "Yes"), ("No", "No")], default="No", verbose_name="Do you hold any Office Bearers position in any Association")
     association_position = models.CharField(max_length=255, blank=True, null=True, verbose_name="Association Position")
-    directors = models.ManyToManyField(Director, related_name='form1s', blank=True)
+    directors = models.ManyToManyField(Director, related_name='form1s', blank=True,)
     reason_for_joining_chamber = models.TextField()
     
     e_sign = models.ImageField(upload_to='e_signs/', null=True, blank=True)
@@ -98,60 +98,60 @@ class Form1(models.Model):
 
 
 '''
-
 {
     "directors": [],
-    "Nameofapplicant": "",
+    "Nameofapplicant": "eeeeeeeeeeeeeeeeee",
     "constitution": null,
     "individual_name": "",
     "is_individual": false,
-    "Businessactivity": "",
-    "regoffadd": "",
-    "acoffice": "",
-    "acwork": "",
-    "cdlan": "",
-    "cdphone": "",
-    "cdemail": "",
-    "cdweb": "",
-    "aadhar": null,
-    "pancardno": null,
-    "GSTNo": null,
-    "CompanyFirmRegNo": null,
-    "SocietyAssociationRegNo": null,
-    "paname": "",
-    "papan": "",
-    "paphone": "",
-    "padesignation": "",
-    "paaadhaar": "",
-    "pamail_id": "",
-    "indmain_category": "",
-    "indsub_category": "",
-    "cmdomestic": "",
-    "cmboth": "",
-    "cmpercentage_of_imports": "",
-    "cmglobal_market": "",
-    "cmpercentage_of_exports": "",
-    "country_name_foreign_collaboration": "",
-    "collaborator_name_foreign_collaboration": "",
-    "annual_turnover_year1": null,
-    "annual_turnover_year2": null,
-    "annual_turnover_year3": null,
-    "classindustry": null,
-    "direct_office_employees": null,
-    "indirect_contractual_employees": null,
-    "works_employees": null,
-    "outsourced_employees": null,
-    "esic": "",
-    "epf": "",
-    "branches_outside_india": "",
-    "is_member_of_association": null,
-    "association_name": "",
-    "is_office_bearer": null,
-    "association_position": "",
-    "reason_for_joining_chamber": "",
+    "Businessactivity": "eeeeeeeeeeeeeeeeeeeee",
+    "regoffadd": "eeeeeeeeeeeeeeeee",
+    "acoffice": "eeeeeeeeeeee",
+    "acwork": "eeeeeeeeeeeeeeeee",
+    "cdlan": "1147483647",
+    "cdphone": "1147483647",
+    "cdemail": "lokesh07084@gmail.com",
+    "cdweb": "https://lokeshdev.co/",
+    "aadhar": "1147483647",
+    "pancardno": "1147483647",
+    "GSTNo": "1147483647",
+    "CompanyFirmRegNo": "1147483647",
+    "SocietyAssociationRegNo": "1147483647",
+    "paname": "EEEEEEEEEEEEE",
+    "papan": "114748364",
+    "paphone": "114748364",
+    "padesignation": "EEEEEEEEEEEE",
+    "paaadhaar": "1147483647",
+    "pamail_id": "lokesh07084@gmail.com",
+    "indmain_category": "EEEEEEEEEE",
+    "indsub_category": "EEEEEEEEEEEE",
+    "cmdomestic": "EEEEEEEEEEEE",
+    "cmboth": "EEEE",
+    "cmpercentage_of_imports": "EEEEEE",
+    "cmglobal_market": "EEEEE",
+    "cmpercentage_of_exports": "EEEEEEEEE",
+    "country_name_foreign_collaboration": "EEEEEEEE",
+    "collaborator_name_foreign_collaboration": "EEEEEEEEEEEEEE",
+    "annual_turnover_year1": "3",
+    "annual_turnover_year2": "3",
+    "annual_turnover_year3": "3",
+    "classindustry": "Small",
+    "direct_office_employees": "3",
+    "indirect_contractual_employees": "3",
+    "works_employees": "3",
+    "outsourced_employees": "3",
+    "esic": "EEEEE",
+    "epf": "EEEEEEEE",
+    "branches_outside_india": "EEEEEEE",
+    "is_member_of_association": "Yes",
+    "association_name": "eee",
+    "is_office_bearer": "Yes",
+    "association_position": "eee",
+    "reason_for_joining_chamber": "EEE",
     "e_sign": null,
     "seal_image": null
 }
+
 
 '''
 
