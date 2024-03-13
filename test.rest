@@ -1,0 +1,18 @@
+POST http://192.168.68.83:8000/api/login/
+Content-Type: application/json
+
+{ "Emailid": "titannatesam@gmail.com", "password":"0987654321" }
+
+###
+
+POST http://192.168.68.83:8000/api/signup/
+Content-Type: application/json
+
+{ "username":"Natesan", "Emailid":"titannatesam@gmail.com", "mobilenum":"6380615171", "password":"0987654321" }
+
+###
+
+GET  http://192.168.68.83:8000/api/test_token/
+Content-Type: application/json
+
+{ "Emailid": "lokesh07084@gmail.com", "password":"0987654321"}

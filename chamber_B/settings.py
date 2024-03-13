@@ -41,12 +41,22 @@ INSTALLED_APPS = [
     'corsheaders',
     'phonenumber_field',
     'rest_framework',
+    'rest_framework.authtoken'
 ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -93,6 +103,7 @@ DATABASES = {
     }
 }
 
+
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -136,6 +147,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 import os
 
-MEDIA_ROOT= os.path.join(BASE_DIR, 'media/')
+MEDIA_ROOT= os.path.join(BASE_DIR, 'mediaw')
 MEDIA_URL= "/media/"
 

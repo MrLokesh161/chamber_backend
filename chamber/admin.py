@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import Form1, Director
+from django.contrib.auth.admin import UserAdmin
+from .models import Form1, Director, Form2
+
 
 class Form1Admin(admin.ModelAdmin):
     list_display = (
@@ -55,5 +57,12 @@ class Form1Admin(admin.ModelAdmin):
         'seal_image',
     )
 
+
+class Form2Admin(admin.ModelAdmin):
+    list_display = ['__str__', 'iande', 'incometaxtpan', 'FactoryRegistrationCertificate', 'MemorandumArticleofAssociation', 'GSTINRegistrationCopy', 'IECodeCertificate', 'ProfessionalCertificate', 'CopyofLandDocument', 'LandHolding', 'passportsizephoto', 'DirectorsPartners']
+
+
+admin.site.register(Form2, Form2Admin)
 admin.site.register(Form1, Form1Admin)
 admin.site.register(Director)
+
