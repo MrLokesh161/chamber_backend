@@ -3,16 +3,21 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-# from .serializers import Form1Serializer, DirectorSerializer, Form2Serializer
+from .serializers import Form1Serializer, DirectorSerializer, Form2Serializer
 from .serializers import UserSerializer
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
-# from .models import Form1 as Form1Model
+from .models import Form1 as Form1Model, PaymentTransaction, MembershipPrices
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import api_view, authentication_classes,permission_classes
 from rest_framework import authentication, permissions
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny,IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
+from django.views.decorators.csrf import csrf_exempt
+from copy import deepcopy
+from datetime import datetime, timedelta
+from .utils import calculate_total_amount
 
 class CustomAuthToken(ObtainAuthToken):
 
@@ -21,11 +26,13 @@ class CustomAuthToken(ObtainAuthToken):
                                            context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
+        print(user)
         token, created = Token.objects.get_or_create(user=user)
         return Response({
             'token': token.key,
             'user_id': user.pk,
             'email': user.email,
+            'login': 'Success'
         })
 
 @api_view(['POST'])
@@ -39,20 +46,32 @@ def signupview(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
 def create_form1(request):
     if request.method == 'POST':
-        serializer = Form1Serializer(data=request.data)
-        print(request.data['is_individual'])
-        if request.data['constitution']=='Individual':
-            request.data['is_individual']=True
-        
+        user = request.user 
+
+        # Create a mutable copy of request.data
+        mutable_data = request.data.copy()
+
+        # Update the mutable copy with user information
+        mutable_data['user'] = user.pk
+
+        serializer = Form1Serializer(data=mutable_data)
+        print(mutable_data['is_individual'])
+        if mutable_data['constitution'] == 'Individual':
+            mutable_data['is_individual'] = True
 
         if serializer.is_valid():
-            directors_data = request.data.get('directors')
+            directors_data = mutable_data.get('directors')
+
+            print(serializer)
 
             form1_instance = serializer.save()
+
+            print(form1_instance)
 
             if directors_data:
                 director_serializer = DirectorSerializer(data=directors_data, many=True)
@@ -66,28 +85,105 @@ def create_form1(request):
             }
 
             return Response(response_data, status=status.HTTP_201_CREATED)
-        print(request.data)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
     
 @api_view(['POST'])
-def create_form2(request, form1_instance_id):
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def create_form2(request):
     if request.method == 'POST':
-        form1_instance = get_object_or_404(Form1Model, id=form1_instance_id)
-        
+        form1_instance = get_object_or_404(Form1Model, user=request.user)
 
         form2_serializer = Form2Serializer(data=request.data, context={'form1_instance': form1_instance})
         if form2_serializer.is_valid():
             form2_instance = form2_serializer.save()
-            
+
             form1_instance.Form2.add(form2_instance)
 
             messages.success(request, 'Form 2 submitted successfully.')
             return Response({"Form2": "Success"}, status=status.HTTP_201_CREATED)
 
         return Response(form2_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_page_view(request):
+    if request.method == 'GET':
+        try:
+            # Assuming 'user' is the correct field name in your Form1Model model
+            form1_instance = Form1Model.objects.get(user=request.user)
+            print(request.user.username)
+
+            
+            user_info = {
+                'name': request.user.username,
+                'email': request.user.email,
+                'business_activity': form1_instance.Businessactivity,
+            }
+            print(user_info)
+
+            return Response(user_info, status=status.HTTP_200_OK)
+        except Form1Model.DoesNotExist:
+            return Response({'error': 'User information not found.'}, status=status.HTTP_404_NOT_FOUND)
+    else:
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def process_payment(request):
+    if request.method == 'POST':
+        # Extract data from the request
+        membership_type = request.data.get('membership_type')
+        sales_turnover = request.data.get('sales_turnover')
+        card_number = request.data.get('card_number')
+        expiry_date = request.data.get('expiry_date')
+        cvv = request.data.get('cvv')
+        cardholder_name = request.data.get('cardholder_name')
+        journal_subscription = request.data.get('journal_subscription', False)
+        chamber_day_celebrations = request.data.get('chamber_day_celebrations', False)
+
+        # Calculate the total amount and set other fields accordingly
+        total_amount = calculate_total_amount(membership_type, sales_turnover, journal_subscription, chamber_day_celebrations)
+        entrance_fee = getattr(MembershipPrices, 'admissionFee', 0)
+        selected_membership_amount = total_amount - entrance_fee
+
+        # Calculate membership expiry based on membership type
+        if membership_type == 'life':
+            expiry_date = None  # Set to None for lifetime membership
+        else:
+            current_date = datetime.now()
+            Membership_expiry_date = current_date + timedelta(days=365)  # Membership valid for one year
+
+        # Get the user associated with the authentication token
+        user = request.user
+
+        # Create a PaymentTransaction instance associated with the user
+        payment_transaction = PaymentTransaction.objects.create(
+            user=user,
+            membership_type=membership_type,
+            sales_turnover=sales_turnover,
+            card_number=card_number,
+            expiry_date=expiry_date,
+            cvv=cvv,
+            cardholder_name=cardholder_name,
+            entrance_fee=entrance_fee,
+            selected_membership_amount=selected_membership_amount,
+            journal_subscription=journal_subscription,
+            chamber_day_celebrations=chamber_day_celebrations,
+            total_amount=total_amount,
+            membership_expiry_date=Membership_expiry_date,
+        )
+
+        # You can add additional logic here, like sending confirmation emails, etc.
+
+        return Response({'message': 'Payment successful!', 'Membership_expiry_date': Membership_expiry_date}, status=status.HTTP_200_OK)
+
+    return Response({'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 # # @api_view(['POST'])
 # # def loginview(request):

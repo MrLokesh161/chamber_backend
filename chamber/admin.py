@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Form1, Director, Form2
+from .models import Form1, Director, Form2, PaymentTransaction
 
 
 class Form1Admin(admin.ModelAdmin):
@@ -59,9 +59,27 @@ class Form1Admin(admin.ModelAdmin):
 
 
 class Form2Admin(admin.ModelAdmin):
-    list_display = ['__str__', 'iande', 'incometaxtpan', 'FactoryRegistrationCertificate', 'MemorandumArticleofAssociation', 'GSTINRegistrationCopy', 'IECodeCertificate', 'ProfessionalCertificate', 'CopyofLandDocument', 'LandHolding', 'passportsizephoto', 'DirectorsPartners']
+    list_display = [ 'iande', 'incometaxtpan', 'FactoryRegistrationCertificate', 'MemorandumArticleofAssociation', 'GSTINRegistrationCopy', 'IECodeCertificate', 'ProfessionalCertificate', 'CopyofLandDocument', 'LandHolding', 'passportsizephoto', 'DirectorsPartners']
 
 
+class PaymentTransactionAdmin(admin.ModelAdmin):
+    list_display = [
+        'membership_type',
+        'sales_turnover',
+        'card_number',
+        'expiry_date',
+        'cvv',
+        'cardholder_name',
+        'entrance_fee',
+        'selected_membership_amount',
+        'journal_subscription',
+        'chamber_day_celebrations',
+        'total_amount',
+        'registration_date',
+        'membership_expiry_date',
+    ]
+
+admin.site.register(PaymentTransaction, PaymentTransactionAdmin)
 admin.site.register(Form2, Form2Admin)
 admin.site.register(Form1, Form1Admin)
 admin.site.register(Director)

@@ -6,6 +6,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import User 
+from django.utils import timezone
 
 
 
@@ -45,6 +47,7 @@ class Form2(models.Model):
 
 
 class Form1(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     Nameofapplicant = models.CharField(max_length=255, null=True)
     constitution_options = [
         ('Individual', 'Individual'),
@@ -135,8 +138,53 @@ class Form1(models.Model):
     def __str__(self):
         return f"{self.Nameofapplicant}: {str(self.e_sign)}"
 
+class PaymentTransaction(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    membership_type_choices = [
+        ('trader', 'Trader'),
+        ('professional', 'Professional'),
+        ('associations', 'Associations'),
+        ('life', 'Life Membership'),
+    ]
 
+    sales_turnover_choices = [
+        ('upTo5Crore', 'Up to Rs. 5 Crore'),
+        ('above5CroreUpTo10Crore', 'Above Rs. 5 Crore up to Rs. 10 Crore'),
+        ('above10CroreUpTo25Crore', 'Above Rs. 10 Crore up to Rs. 25 Crore'),
+        ('above25Crore', 'Above Rs. 25 Crore'),
+    ]
 
+    membership_type = models.CharField(max_length=20, choices=membership_type_choices)
+    sales_turnover = models.CharField(max_length=50, choices=sales_turnover_choices, blank=True, null=True)
+    card_number = models.CharField(max_length=20)
+    expiry_date = models.DateField()
+    cvv = models.CharField(max_length=4)
+    cardholder_name = models.CharField(max_length=255)
+
+    entrance_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    selected_membership_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    journal_subscription = models.BooleanField()
+    chamber_day_celebrations = models.BooleanField()
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    registration_date = models.DateTimeField(default=timezone.now)
+    membership_expiry_date = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return self.user.username
+
+class MembershipPrices:
+    upTo5Crore = 2950
+    above5CroreUpTo10Crore = 4130
+    above10CroreUpTo25Crore = 5000
+    above25Crore = 8250
+
+    professional = 2950
+    associations = 2360
+    lifeMembership = 88500
+    admissionFee = 3540
+    journalSubscription = 295
+    chamberDayCelebrations = 550
 
 
 '''
