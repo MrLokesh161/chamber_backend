@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Form1, Director, Form2, PaymentTransaction
+from .models import Form1, Director, Form2, PaymentTransaction, Events
 
 
 class Form1Admin(admin.ModelAdmin):
@@ -79,6 +79,17 @@ class PaymentTransactionAdmin(admin.ModelAdmin):
         'membership_expiry_date',
     ]
 
+class EventAdmin(admin.ModelAdmin):
+    list_display=[
+        'Eventimage',
+        'NameofEvent',
+        'Description',
+        'DateofEvent',
+        'LinkforEvent',
+    ]
+
+
+admin.site.register(Events, EventAdmin)
 admin.site.register(PaymentTransaction, PaymentTransactionAdmin)
 admin.site.register(Form2, Form2Admin)
 admin.site.register(Form1, Form1Admin)

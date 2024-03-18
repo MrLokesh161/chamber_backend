@@ -3,17 +3,18 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from .serializers import Form1Serializer, DirectorSerializer, Form2Serializer
+from .serializers import Form1Serializer, DirectorSerializer, Form2Serializer, EventsSerializer
 from .serializers import UserSerializer
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
-from .models import Form1 as Form1Model, PaymentTransaction, MembershipPrices
+from .models import Form1 as Form1Model, PaymentTransaction, MembershipPrices, Events
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import api_view, authentication_classes,permission_classes
 from rest_framework import authentication, permissions
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
+from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -108,35 +109,61 @@ def create_form2(request):
 
         return Response(form2_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def user_page_view(request):
-    if request.method == 'GET':
+def get_user_information(request):
+    users_data = []
+    
+    # Retrieve user information from User model
+    users = User.objects.all()
+    for user in users:
+        user_data = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'form1_data': None,
+            'payment_transaction_data': None
+        }
+        
         try:
-            # Assuming 'user' is the correct field name in your Form1Model model
-            form1_instance = Form1Model.objects.get(user=request.user)
-            print(request.user.username)
-
-            
-            user_info = {
-                'name': request.user.username,
-                'email': request.user.email,
-                'business_activity': form1_instance.Businessactivity,
+            form1_instance = Form1Model.objects.get(user=user)
+            user_data['form1_data'] = {
+                'Nameofapplicant': form1_instance.Nameofapplicant,
+                'Businessactivity': form1_instance.Businessactivity,
+                'cdlan': form1_instance.cdlan,
+                'cdphone': form1_instance.cdphone,
+                'cdemail': form1_instance.cdemail,
+                'cdweb': form1_instance.cdweb,
+                'constitution': form1_instance.constitution,
+                'regoffadd': form1_instance.regoffadd,
+                'acoffice': form1_instance.acoffice,
+                'acwork': form1_instance.acwork,
             }
-            print(user_info)
-
-            return Response(user_info, status=status.HTTP_200_OK)
         except Form1Model.DoesNotExist:
-            return Response({'error': 'User information not found.'}, status=status.HTTP_404_NOT_FOUND)
-    else:
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            user_data['form1_data'] = None
+            
+        try:
+            payment_transaction_instance = PaymentTransaction.objects.get(user=user)
+            user_data['payment_transaction_data'] = {
+                'membership_type': payment_transaction_instance.membership_type,
+                'sales_turnover': payment_transaction_instance.sales_turnover,
+                'registration_date': payment_transaction_instance.registration_date,
+                'membership_expiry_date': payment_transaction_instance.membership_expiry_date,
+            }
+        except PaymentTransaction.DoesNotExist:
+            user_data['payment_transaction_data'] = None
+            
+        users_data.append(user_data)
+    
+    return Response(users_data)
+
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def process_payment(request):
     if request.method == 'POST':
-        # Extract data from the request
         membership_type = request.data.get('membership_type')
         sales_turnover = request.data.get('sales_turnover')
         card_number = request.data.get('card_number')
@@ -146,22 +173,19 @@ def process_payment(request):
         journal_subscription = request.data.get('journal_subscription', False)
         chamber_day_celebrations = request.data.get('chamber_day_celebrations', False)
 
-        # Calculate the total amount and set other fields accordingly
         total_amount = calculate_total_amount(membership_type, sales_turnover, journal_subscription, chamber_day_celebrations)
         entrance_fee = getattr(MembershipPrices, 'admissionFee', 0)
         selected_membership_amount = total_amount - entrance_fee
 
-        # Calculate membership expiry based on membership type
         if membership_type == 'life':
-            expiry_date = None  # Set to None for lifetime membership
+            expiry_date = None 
         else:
             current_date = datetime.now()
-            Membership_expiry_date = current_date + timedelta(days=365)  # Membership valid for one year
+            Membership_expiry_date = current_date + timedelta(days=365)  
 
-        # Get the user associated with the authentication token
         user = request.user
+        print(user)
 
-        # Create a PaymentTransaction instance associated with the user
         payment_transaction = PaymentTransaction.objects.create(
             user=user,
             membership_type=membership_type,
@@ -178,57 +202,18 @@ def process_payment(request):
             membership_expiry_date=Membership_expiry_date,
         )
 
-        # You can add additional logic here, like sending confirmation emails, etc.
 
         return Response({'message': 'Payment successful!', 'Membership_expiry_date': Membership_expiry_date}, status=status.HTTP_200_OK)
 
     return Response({'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-# # @api_view(['POST'])
-# # def loginview(request):
-# #     if request.method == 'POST':
-# #         Emailid = request.data.get('Emailid')
-# #         password = request.data.get('password')
-# #         print(Emailid,password)
-# #         try:
-# #             user = User.objects.get(Emailid=Emailid, password=password)
-# #             if user:
-# #                 return Response({"login" : "Success"})
-# #             else: 
-# #                 return Response({"login": "Login failed"}, status=status.HTTP_401_UNAUTHORIZED)
-# #         except:
-# #             return Response({"login": "Invalid Credentials"})
-        
-
-# # @api_view(['POST'])
-# # def signupview(request):
-# #     if request.method == 'POST':
-# #         data = request.data
-# #         username = data.get('username')
-# #         Emailid = data.get('Emailid')
-# #         mobilenum = data.get('mobilenum')
-# #         password = data.get('password')
-
-# #         if username and password and Emailid and mobilenum:
-# #             if User.objects.filter(Emailid=Emailid).exists():
-# #                 return Response({'error': 'User with this email already exists.'}, status=400)
-# #             elif User.objects.filter(mobilenum=mobilenum).exists():
-# #                 return Response({'error': 'User with this phone number already exists.'}, status=400)
-            
-# #             user = User(
-# #                 username=username,
-# #                 Emailid=Emailid,
-# #                 mobilenum=mobilenum,
-# #                 password=password
-# #             )
-# #             user.save()
-# #             return Response({'success': 'User created successfully.'}, status=201)
-
-# #         return Response({'error': 'Email and password are required fields.'}, status=400)
-
-# #     return Response({'error': 'Invalid request method.'}, status=400)
-
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def events_view(request):
+    events = Events.objects.all()
+    serializer = EventsSerializer(events, many=True)
+    return Response(serializer.data)
 
 @api_view(['GET'])
 def test_token(request):

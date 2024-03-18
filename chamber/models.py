@@ -186,6 +186,14 @@ class MembershipPrices:
     journalSubscription = 295
     chamberDayCelebrations = 550
 
+class Events(models.Model):
+    Eventimage = models.FileField(upload_to='eventsimage/', null=True, verbose_name="")
+    NameofEvent = models.CharField(max_length=255)
+    Description = models.CharField(max_length=1000)
+    DateofEvent = models.DateField(null=True)
+    LinkforEvent = models.URLField(max_length=200, null=True)
+    
+   
 
 '''
 {
