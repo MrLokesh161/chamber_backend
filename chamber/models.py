@@ -192,6 +192,13 @@ class Events(models.Model):
     Description = models.CharField(max_length=1000)
     DateofEvent = models.DateField(null=True)
     LinkforEvent = models.URLField(max_length=200, null=True)
+
+class Contact(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    Name = models.CharField(max_length=255)
+    Email = models.EmailField()
+    phonenumber = models.BigIntegerField()
+    Description = models.CharField(max_length=1000)
     
    
 

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Form1, Director, Form2, PaymentTransaction, Events
+from .models import Form1, Director, Form2, PaymentTransaction, Events, Contact
 
 
 class Form1Admin(admin.ModelAdmin):
@@ -88,7 +88,17 @@ class EventAdmin(admin.ModelAdmin):
         'LinkforEvent',
     ]
 
+class ContactAdmin(admin.ModelAdmin):
+    list_display=[
+        'user',
+        'Name',
+        'Email',
+        'phonenumber',
+        'Description',
+    ]
 
+
+admin.site.register(Contact, ContactAdmin)
 admin.site.register(Events, EventAdmin)
 admin.site.register(PaymentTransaction, PaymentTransactionAdmin)
 admin.site.register(Form2, Form2Admin)

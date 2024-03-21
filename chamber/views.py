@@ -3,15 +3,14 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from .serializers import Form1Serializer, DirectorSerializer, Form2Serializer, EventsSerializer
+from .serializers import Form1Serializer, DirectorSerializer, Form2Serializer, EventsSerializer, ContactSerializer
 from .serializers import UserSerializer
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
-from .models import Form1 as Form1Model, PaymentTransaction, MembershipPrices, Events
+from .models import Form1 as Form1Model, PaymentTransaction, MembershipPrices, Events, Contact
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import api_view, authentication_classes,permission_classes
-from rest_framework import authentication, permissions
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from django.contrib.auth.models import User
@@ -115,7 +114,6 @@ def create_form2(request):
 def get_user_information(request):
     users_data = []
     
-    # Retrieve user information from User model
     users = User.objects.all()
     for user in users:
         user_data = {
@@ -160,6 +158,7 @@ def get_user_information(request):
 
 
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def process_payment(request):
@@ -177,11 +176,11 @@ def process_payment(request):
         entrance_fee = getattr(MembershipPrices, 'admissionFee', 0)
         selected_membership_amount = total_amount - entrance_fee
 
-        if membership_type == 'life':
-            expiry_date = None 
-        else:
+        Membership_expiry_date = None  # Initialize the variable outside the if block
+
+        if membership_type != 'life':
             current_date = datetime.now()
-            Membership_expiry_date = current_date + timedelta(days=365)  
+            Membership_expiry_date = current_date + timedelta(days=365)  # Assign value conditionally
 
         user = request.user
         print(user)
@@ -202,7 +201,6 @@ def process_payment(request):
             membership_expiry_date=Membership_expiry_date,
         )
 
-
         return Response({'message': 'Payment successful!', 'Membership_expiry_date': Membership_expiry_date}, status=status.HTTP_200_OK)
 
     return Response({'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -214,6 +212,28 @@ def events_view(request):
     events = Events.objects.all()
     serializer = EventsSerializer(events, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def formadmin_view(request):
+    form1 = Form1Model.objects.all()
+    serializer = Form1Serializer(form1, many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def contact_view(request):
+    if request.method == 'POST':
+        data = request.data.copy()
+        data['user'] = request.user.id
+        serializer = ContactSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"Details": "Success", "data": serializer.data}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 @api_view(['GET'])
 def test_token(request):

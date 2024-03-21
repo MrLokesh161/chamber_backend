@@ -1,7 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from django.contrib.auth import get_user_model  
-from .models import Form1, Director, Form2, Events
+from .models import Form1, Director, Form2, Events, Contact
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,3 +35,8 @@ class EventsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Events
         fields = ['id', 'Eventimage', 'NameofEvent', 'Description', 'DateofEvent', 'LinkforEvent']
+
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = '__all__'
