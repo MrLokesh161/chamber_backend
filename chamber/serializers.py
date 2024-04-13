@@ -1,7 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from django.contrib.auth import get_user_model  
-from .models import Form1, Director, Form2, Events, Contact
+from .models import Form1, Director, Form2, Events, Contact, PaymentTransaction
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -40,4 +40,18 @@ class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
         fields = '__all__'
+
+
+class DateFieldTZ(serializers.ReadOnlyField):
+    def to_representation(self, value):
+        if value is None:
+            return None
+        return value.date()
+
+class MembersSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    registration_date = DateFieldTZ()  # Remove the source parameter # Use custom DateFieldTZ
+    class Meta:
+        model = PaymentTransaction
+        fields = ['username', 'registration_date']
 

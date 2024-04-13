@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from .serializers import Form1Serializer, DirectorSerializer, Form2Serializer, EventsSerializer, ContactSerializer
+from .serializers import Form1Serializer, DirectorSerializer, Form2Serializer, EventsSerializer, ContactSerializer, MembersSerializer
 from .serializers import UserSerializer
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
@@ -210,6 +210,13 @@ def process_payment(request):
 def events_view(request):
     events = Events.objects.all()
     serializer = EventsSerializer(events, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def MembersView(request):
+    events = PaymentTransaction.objects.all()
+    serializer = MembersSerializer(events, many=True)
     return Response(serializer.data)
 
 
