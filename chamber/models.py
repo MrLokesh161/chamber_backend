@@ -260,4 +260,3 @@ class Contact(models.Model):
 
 '''
 
-

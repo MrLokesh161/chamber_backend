@@ -15,7 +15,6 @@ from rest_framework.permissions import AllowAny,IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
-from copy import deepcopy
 from datetime import datetime, timedelta
 from .utils import calculate_total_amount
 
@@ -238,3 +237,4 @@ def contact_view(request):
 @api_view(['GET'])
 def test_token(request):
     return Response({})
+
