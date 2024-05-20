@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from .serializers import Form1Serializer, DirectorSerializer, Form2Serializer, EventsSerializer, ContactSerializer, MembersSerializer, Form1ModelSerializer
 from .serializers import UserSerializer
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.forms.models import model_to_dict
 from django.http import JsonResponse
 from django.contrib import messages
@@ -446,3 +446,7 @@ def ExistingMembercheck (request):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     return Response({})
+
+
+def home_page(request):
+    return render(request, 'index.html')
