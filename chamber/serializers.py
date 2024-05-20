@@ -29,7 +29,7 @@ class Form1Serializer(serializers.ModelSerializer):
 
     class Meta:
         model = Form1
-        fields = '__all__'
+        fields = '__all__' 
 
 class EventsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -55,3 +55,15 @@ class MembersSerializer(serializers.ModelSerializer):
         model = PaymentTransaction
         fields = ['username', 'registration_date']
 
+
+class Form1ModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Form1
+        fields = '__all__'
+
+    def update(self, instance, validated_data):
+        for field, value in validated_data.items():
+            if value is not None:
+                setattr(instance, field, value)
+        instance.save()
+        return instance

@@ -3,9 +3,11 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from .serializers import Form1Serializer, DirectorSerializer, Form2Serializer, EventsSerializer, ContactSerializer, MembersSerializer
+from .serializers import Form1Serializer, DirectorSerializer, Form2Serializer, EventsSerializer, ContactSerializer, MembersSerializer, Form1ModelSerializer
 from .serializers import UserSerializer
 from django.shortcuts import get_object_or_404
+from django.forms.models import model_to_dict
+from django.http import JsonResponse
 from django.contrib import messages
 from .models import Form1 as Form1Model, PaymentTransaction, MembershipPrices, Events, Contact
 from rest_framework.authtoken.models import Token
@@ -18,7 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime, timedelta
 from .utils import calculate_total_amount
 
-class CustomAuthToken(ObtainAuthToken):
+class CustomAuthToken(ObtainAuthToken): 
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data,
@@ -33,6 +35,11 @@ class CustomAuthToken(ObtainAuthToken):
             'email': user.email,
             'login': 'Success'
         })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_token(request):
+    return Response({'message': 'Token is valid'})
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -90,7 +97,6 @@ def create_form1(request):
 
     
 @api_view(['POST'])
-@authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def create_form2(request):
     if request.method == 'POST':
@@ -108,19 +114,27 @@ def create_form2(request):
         return Response(form2_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_information(request):
     users_data = []
     
+    # Get the authenticated user
+    user = request.user
+    
+    # Get the token of the authenticated user
+    
     users = User.objects.all()
     for user in users:
+        token = Token.objects.get(user=user).key
         user_data = {
             'id': user.id,
             'username': user.username,
             'email': user.email,
             'form1_data': None,
-            'payment_transaction_data': None
+            'payment_transaction_data': None,
+            'token': token  
         }
         
         try:
@@ -128,14 +142,50 @@ def get_user_information(request):
             user_data['form1_data'] = {
                 'Nameofapplicant': form1_instance.Nameofapplicant,
                 'Businessactivity': form1_instance.Businessactivity,
+                'regoffadd': form1_instance.regoffadd,
+                'acoffice': form1_instance.acoffice,
+                'acwork': form1_instance.acwork,
                 'cdlan': form1_instance.cdlan,
                 'cdphone': form1_instance.cdphone,
                 'cdemail': form1_instance.cdemail,
                 'cdweb': form1_instance.cdweb,
-                'constitution': form1_instance.constitution,
-                'regoffadd': form1_instance.regoffadd,
-                'acoffice': form1_instance.acoffice,
-                'acwork': form1_instance.acwork,
+                'aadhar': form1_instance.aadhar,
+                'pancardno': form1_instance.pancardno,
+                'GSTNo': form1_instance.GSTNo,
+                'CompanyFirmRegNo': form1_instance.CompanyFirmRegNo,
+                'SocietyAssociationRegNo': form1_instance.SocietyAssociationRegNo,
+                'paname': form1_instance.paname,
+                'papan': form1_instance.papan,
+                'paphone': form1_instance.paphone,
+                'padesignation': form1_instance.padesignation,
+                'paaadhaar': form1_instance.paaadhaar,
+                'pamail_id': form1_instance.pamail_id,
+                'indmain_category': form1_instance.indmain_category,
+                'indsub_category': form1_instance.indsub_category,
+                'cmdomestic': form1_instance.cmdomestic,
+                'cmboth': form1_instance.cmboth,
+                'cmpercentage_of_imports': form1_instance.cmpercentage_of_imports,
+                'cmglobal_market': form1_instance.cmglobal_market,
+                'cmpercentage_of_exports': form1_instance.cmpercentage_of_exports,
+                'country_name_foreign_collaboration': form1_instance.country_name_foreign_collaboration,
+                'collaborator_name_foreign_collaboration': form1_instance.collaborator_name_foreign_collaboration,
+                'annual_turnover_year1': form1_instance.annual_turnover_year1,
+                'annual_turnover_year2': form1_instance.annual_turnover_year2,
+                'annual_turnover_year3': form1_instance.annual_turnover_year3,
+                'classindustry': form1_instance.classindustry,
+                'direct_office_employees': form1_instance.direct_office_employees,
+                'indirect_contractual_employees': form1_instance.indirect_contractual_employees,
+                'works_employees': form1_instance.works_employees,
+                'outsourced_employees': form1_instance.outsourced_employees,
+                'esic': form1_instance.esic,
+                'epf': form1_instance.epf,
+                'branches_outside_india': form1_instance.branches_outside_india,
+                'is_member_of_association': form1_instance.is_member_of_association,
+                'association_name': form1_instance.association_name,
+                'is_office_bearer': form1_instance.is_office_bearer,
+                'association_position': form1_instance.association_position,
+                'reason_for_joining_chamber': form1_instance.reason_for_joining_chamber,
+                'form_status': form1_instance.form_status,
             }
         except Form1Model.DoesNotExist:
             user_data['form1_data'] = None
@@ -158,7 +208,9 @@ def get_user_information(request):
 
 
 
+
 @api_view(['POST'])
+@authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def process_payment(request):
     if request.method == 'POST':
@@ -168,22 +220,29 @@ def process_payment(request):
         expiry_date = request.data.get('expiry_date')
         cvv = request.data.get('cvv')
         cardholder_name = request.data.get('cardholder_name')
-        journal_subscription = request.data.get('journal_subscription', False)
-        chamber_day_celebrations = request.data.get('chamber_day_celebrations', False)
 
-        total_amount = calculate_total_amount(membership_type, sales_turnover, journal_subscription, chamber_day_celebrations)
-        entrance_fee = getattr(MembershipPrices, 'admissionFee', 0)
-        selected_membership_amount = total_amount - entrance_fee
+        # Calculate total amount based on membership type and sales turnover
+        total_amount = calculate_total_amount(membership_type, sales_turnover)
 
-        Membership_expiry_date = None  # Initialize the variable outside the if block
+        # Set entrance fee and selected membership amount based on membership type
+        if membership_type == 'life':
+            total_amount = 88500  # Lifetime membership fee
+            entrance_fee = 0  # No entrance fee for lifetime membership
+            selected_membership_amount = total_amount
+        else:
+            entrance_fee = 3540  # Entrance fee for non-lifetime membership
+            selected_membership_amount = total_amount - entrance_fee
 
+        # Calculate expiry date for non-lifetime memberships
+        membership_expiry_date = None
         if membership_type != 'life':
             current_date = datetime.now()
-            Membership_expiry_date = current_date + timedelta(days=365)  # Assign value conditionally
+            membership_expiry_date = current_date + timedelta(days=365)
 
+        # Get the authenticated user
         user = request.user
-        print(user)
 
+        # Create payment transaction instance
         payment_transaction = PaymentTransaction.objects.create(
             user=user,
             membership_type=membership_type,
@@ -194,15 +253,15 @@ def process_payment(request):
             cardholder_name=cardholder_name,
             entrance_fee=entrance_fee,
             selected_membership_amount=selected_membership_amount,
-            journal_subscription=journal_subscription,
-            chamber_day_celebrations=chamber_day_celebrations,
             total_amount=total_amount,
-            membership_expiry_date=Membership_expiry_date,
+            membership_expiry_date=membership_expiry_date,
         )
 
-        return Response({'message': 'Payment successful!', 'Membership_expiry_date': Membership_expiry_date}, status=status.HTTP_200_OK)
+        # Return response
+        return Response({'message': 'Payment successful!', 'Membership_expiry_date': membership_expiry_date}, status=status.HTTP_200_OK)
 
     return Response({'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 
 @api_view(['GET'])
@@ -239,9 +298,151 @@ def contact_view(request):
             return Response({"Details": "Success", "data": serializer.data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def test_token(request):
-    return Response({})
 
+    users_data = []
+    
+    # Get the authenticated user
+    user = request.user
+    
+    # Get the token of the authenticated user
+    
+    users = User.objects.all()
+    for user in users:
+        token = Token.objects.get(user=user).key
+        user_data = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'token': token  
+        }
+
+        users_data.append(user_data)
+    
+    return Response(users_data)
+
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def ApproveApplicaton(request):
+
+    
+    if request.method == 'GET':
+        # Retrieve all forms
+        forms = Form1Model.objects.all()
+        serializer = Form1Serializer(forms, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        form_id = request.data.get('id')
+        status_process = request.data.get('status')
+        print("Status Process:", status_process)  # Print the received status for debugging
+        if not form_id or status_process not in ['approve', 'reject', 'payment successful']:  # Updated condition
+            return Response({'error': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Retrieve the form
+        form = Form1Model.objects.filter(pk=form_id).first()
+        if not form:
+            return Response({'error': 'Form not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Perform status transition based on the current status and action
+        if status_process == 'approve':
+            if form.form_status == 'pending':
+                form.form_status = 'Approved by AO'
+            elif form.form_status == 'Approved by AO':
+                form.form_status = 'Approved by CEO'
+            elif form.form_status == 'Approved by CEO':
+                form.form_status = 'Approved by Membership Committee'
+            elif form.form_status == 'Approved by Membership Committee':
+                form.form_status = 'Approved by OB'
+            elif form.form_status == 'Approved by OB':
+                form.form_status = 'waiting for payment'
+            else:
+                return Response({'error': 'Invalid status transition'}, status=status.HTTP_400_BAD_REQUEST)
+        elif status_process == 'payment successful':  # Updated condition
+            form.form_status = 'Payment done (approved as Member)'  # Update status directly
+        elif status_process == 'reject':
+            form.form_status = 'rejected'
+            rejection_reason = request.data.get('ror')
+            if not rejection_reason:
+                return Response({'error': 'Rejection reason required'}, status=status.HTTP_400_BAD_REQUEST)
+            form.ror = rejection_reason
+        else:
+            return Response({'error': 'Invalid status action'}, status=status.HTTP_400_BAD_REQUEST)
+         
+        # Save the updated form status
+        form.save()
+
+        # Prepare response
+        cont = {'message': 'Form status updated successfully'}
+        if form.form_status == 'rejected':
+            cont['message'] = 'Form rejected'
+        cont['content'] = Form1Serializer(form).data
+        
+        return Response(cont, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def singleApplication(request,id):
+    if request.method == 'GET':
+        form = Form1Model.objects.get(pk=id)
+        serializer = Form1Serializer(form)
+        cont ={
+            'content': serializer.data,
+            'message': 'Success'
+        }
+        return Response(cont) 
+
+
+
+@api_view(['GET', 'POST'])
+def form1_detail(request, pk):
+    try:
+        form1_instance = Form1Model.objects.get(pk=pk)
+    except Form1Model.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        form1_data = model_to_dict(form1_instance)
+        # Filter out any binary fields
+        form1_data_filtered = {key: value for key, value in form1_data.items() if not isinstance(value, bytes)}
+        return Response(form1_data_filtered)
+    
+    elif request.method == 'POST':
+        serializer = Form1ModelSerializer(instance=form1_instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def ExistingMembercheck (request):
+
+    if request.method == 'GET':
+        # Retrieve all forms
+        forms = Form1Model.objects.all()
+        serializer = Form1Serializer(forms, many=True)
+        return Response(serializer.data)
+    
+    elif request.method == 'POST':
+        
+        serializer = Form1Serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response({})

@@ -47,13 +47,13 @@ class Form2(models.Model):
 
 
 class Form1(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     Nameofapplicant = models.CharField(max_length=255, null=True)
     constitution_options = [
         ('Individual', 'Individual'),
         ('Proprietory Firm', 'Proprietory Firm'),
         ('Partnership Firm', 'Partnership Firm'),
-        ('LLP', 'LLP'),
+        ('LLP', 'LLP'), 
         ('Private Limited', 'Private Limited'),
         ('Public Limited Unlisted', 'Public Limited Unlisted'),
         ('Public Limited Listed', 'Public Limited Listed'),
@@ -82,11 +82,11 @@ class Form1(models.Model):
     acoffice = models.CharField(max_length=500, null=True)
     acwork = models.CharField(max_length=500, null=True)
     cdlan = models.BigIntegerField(null=True)
-    cdphone = models.BigIntegerField(null=True)
-    cdemail = models.EmailField(max_length=254,unique=True)
+    cdphone = models.CharField(max_length=12, null=True)
+    cdemail = models.EmailField(max_length=254, null=True)
     cdweb = models.URLField(max_length=200, blank=True, null=True)
-    aadhar = models.BigIntegerField(null=True)
-    pancardno = models.BigIntegerField(null=True)
+    aadhar = models.CharField(max_length=12, null=True)
+    pancardno = models.CharField(max_length=12, null=True)
     GSTNo = models.BigIntegerField(null=True)
     CompanyFirmRegNo = models.BigIntegerField(null=True)
     SocietyAssociationRegNo = models.BigIntegerField(null=True)
@@ -133,6 +133,19 @@ class Form1(models.Model):
 
     e_sign = models.FileField(upload_to='e_sign/', null=True, verbose_name="")
     seal_image = models.FileField(upload_to='seal_image/', null=True, verbose_name="")
+    form_status_options = (
+        ("pending","pending"), 
+        ("Approved by AO","Approved by AO"), 
+        ("Approved by CEO","Approved by CEO"), 
+        ("Approved by Membership Committee","Approved by Membership Committee"), 
+        ("Approved by OB","Approved by OB"), 
+        ("Approved as a Member","Approved as a Member"), 
+        ("waiting for payment","waiting for payment"),
+        ('payment done (approved as Member)','payment done (approved as Member)'), 
+        ("rejected","rejected"),
+    )
+    ror = models.TextField(help_text="Reason of Rejection",null=True,blank=True)
+    form_status = models.CharField( choices=form_status_options ,max_length=50, default="pending")
     Form2 = models.ManyToManyField(Form2, related_name='form2', blank=True)
 
     def __str__(self):
@@ -141,7 +154,7 @@ class Form1(models.Model):
 class PaymentTransaction(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     membership_type_choices = [
-        ('trader', 'Trader'),
+        ('general', 'General'),
         ('professional', 'Professional'),
         ('associations', 'Associations'),
         ('life', 'Life Membership'),
@@ -157,14 +170,12 @@ class PaymentTransaction(models.Model):
     membership_type = models.CharField(max_length=20, choices=membership_type_choices)
     sales_turnover = models.CharField(max_length=50, choices=sales_turnover_choices, blank=True, null=True)
     card_number = models.CharField(max_length=20)
-    expiry_date = models.DateField()
-    cvv = models.CharField(max_length=4)
+    expiry_date = models.CharField(max_length=100)
+    cvv = models.CharField(max_length=40)
     cardholder_name = models.CharField(max_length=255)
 
     entrance_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     selected_membership_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    journal_subscription = models.BooleanField()
-    chamber_day_celebrations = models.BooleanField()
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     registration_date = models.DateTimeField(default=timezone.now)
@@ -184,7 +195,7 @@ class MembershipPrices:
     lifeMembership = 88500
     admissionFee = 3540
     journalSubscription = 295
-    chamberDayCelebrations = 550
+    chamberDayCelebrations = 1180
 
 class Events(models.Model):
     Eventimage = models.FileField(upload_to='eventsimage/', null=True, verbose_name="")
@@ -259,4 +270,3 @@ class Contact(models.Model):
 
 
 '''
-

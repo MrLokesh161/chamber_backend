@@ -72,8 +72,6 @@ class PaymentTransactionAdmin(admin.ModelAdmin):
         'cardholder_name',
         'entrance_fee',
         'selected_membership_amount',
-        'journal_subscription',
-        'chamber_day_celebrations',
         'total_amount',
         'registration_date',
         'membership_expiry_date',
