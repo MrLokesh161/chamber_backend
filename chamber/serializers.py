@@ -1,7 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from django.contrib.auth import get_user_model  
-from .models import Form1, Director, Form2, Events, Contact, PaymentTransaction
+from .models import Form1, Director, Form2, Events, Contact, PaymentTransaction, Certificate
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -67,3 +67,8 @@ class Form1ModelSerializer(serializers.ModelSerializer):
                 setattr(instance, field, value)
         instance.save()
         return instance
+    
+class CertificateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certificate
+        fields = '__all__'

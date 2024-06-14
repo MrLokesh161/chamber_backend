@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Form1, Director, Form2, PaymentTransaction, Events, Contact
+from .models import Form1, Director, Form2, PaymentTransaction, Events, Contact, Certificate
 
 
 class Form1Admin(admin.ModelAdmin):
@@ -102,4 +102,4 @@ admin.site.register(PaymentTransaction, PaymentTransactionAdmin)
 admin.site.register(Form2, Form2Admin)
 admin.site.register(Form1, Form1Admin)
 admin.site.register(Director)
-
+admin.site.register(Certificate)

@@ -3,13 +3,13 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from .serializers import Form1Serializer, DirectorSerializer, Form2Serializer, EventsSerializer, ContactSerializer, MembersSerializer, Form1ModelSerializer
+from .serializers import Form1Serializer, DirectorSerializer, Form2Serializer, EventsSerializer, ContactSerializer, MembersSerializer, Form1ModelSerializer, CertificateSerializer
 from .serializers import UserSerializer
 from django.shortcuts import get_object_or_404, render
 from django.forms.models import model_to_dict
 from django.http import JsonResponse
 from django.contrib import messages
-from .models import Form1 as Form1Model, PaymentTransaction, MembershipPrices, Events, Contact
+from .models import Form1 as Form1Model, PaymentTransaction, MembershipPrices, Events, Contact, Certificate
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import api_view, authentication_classes,permission_classes
@@ -19,6 +19,10 @@ from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime, timedelta
 from .utils import calculate_total_amount
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
+from django.template.loader import render_to_string
+from django.utils import timezone
 
 class CustomAuthToken(ObtainAuthToken): 
 
@@ -450,3 +454,9 @@ def ExistingMembercheck (request):
 
 def home_page(request):
     return render(request, 'index.html')
+    
+@api_view(['GET'])
+def display_certificate_info(request):
+    certificates = Certificate.objects.all()
+    serializer = CertificateSerializer(certificates, many=True)
+    return Response(serializer.data)
